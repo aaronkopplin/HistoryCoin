@@ -1,33 +1,34 @@
-from solcx import compile_source
+import json
 from web3 import Web3
 
 
-def compile_contract(file_path: str, file_name: str, contract_name: str):
-    with open(file_path) as contract_file:
-        contract_code = contract_file.read()
-        compiled_contract = compile_source(contract_code, optimize=True, optimize_runs=9999)
-        abi = compiled_contract['<stdin>:Metallic']['abi']
-        bytecode = compiled_contract['<stdin>:Metallic']['bin']
-
-        return bytecode, abi
+def get_abi():
+    contract_json = open("HistoryCoinAbiBin.json")
+    data = json.load(contract_json)
+    return data["contracts"]["HistoryCoin.sol:HistoryCoin"]["abi"]
 
 
-def compile_and_deploy_contract(file_path: str, file_name: str, contract_name: str, w3: Web3):
-    bytecode, abi = compile_contract(file_path, file_name, contract_name)
+def get_binary():
+    contract_json = open("HistoryCoinAbiBin.json")
+    data = json.load(contract_json)
+    return data["contracts"]["HistoryCoin.sol:HistoryCoin"]["bin"]
 
-    w3.eth.defaultAccount = w3.eth.accounts[0]
-    w3Contract = w3.eth.contract(abi=abi, bytecode=bytecode)
-    tx_hash = w3Contract.constructor().transact()
+
+def deploy_contract(w3: Web3, abi):
+    w3_contract = w3.eth.contract(abi=abi, bytecode=get_binary())
+    tx_hash = w3_contract.constructor().transact()
     tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    smart_contract = w3.eth.contract(address=tx_receipt.contractAddress, abi=abi)
+    deployed_contract = w3.eth.contract(address=tx_receipt.contractAddress, abi=abi)
+    with open("HistoryCoinContractAddress", "w") as contract_address_file:
+        contract_address_file.write(tx_receipt.contractAddress)
 
-    with open('SmartContract/ContractMetaData.py', 'w') as contract_metadata_file:
-        contract_metadata_file.write("abi = " + str(abi) + "\n")
-        contract_metadata_file.write("address = \"" + str(tx_receipt.contractAddress) + "\"")
-
-    return smart_contract, abi
+    return deployed_contract, tx_receipt.contractAddress
 
 
 class HistoryCoinContract:
     def __init__(self):
-        self.w3 = Web3()
+        self.w3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
+        self.w3.eth.defaultAccount = self.w3.eth.accounts[0]
+        self.abi = get_abi()
+        self.contract, self.address = deploy_contract(self.w3, self.abi)
+        self.contract = self.w3.eth.contract(self.address)

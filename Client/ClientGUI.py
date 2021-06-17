@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (QWidget,
                              QFrame)
 from PyQt6.QtGui import QFont, QAction, QIcon
 from Client.Frame import Frame
+from Contract import HistoryCoinContract
 
 
 class MainWindow(QMainWindow):
@@ -17,15 +18,12 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("History Coin Client")
         self.setContentsMargins(0, 0, 0, 0)
         self.resize(1000, 800)
-
-        self.frame = Frame()
+        self.frame = Frame()  # self.frame.setStyleSheet("background-color: rgb(100, 200, 100); ")
         self.setCentralWidget(self.frame)
-        self.frame.add_widget(QPushButton("button"))
-        self.frame.add_widget(QPushButton("button"))
-        self.center()
         self.build_menu()
-
+        self.center()
         self.show()
+        self.HistoryCoinContract = HistoryCoinContract()
 
     def center(self):
         rectangle = self.frameGeometry()
