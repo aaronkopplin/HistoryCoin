@@ -32,3 +32,5 @@ class HistoryCoinContract:
         self.abi = get_abi()
         self.contract, self.address = deploy_contract(self.w3, self.abi)
         self.contract = self.w3.eth.contract(self.address)
+        # var = self.contract.functions.GetNumberOfRecords.call()
+        # print(var)

@@ -10,11 +10,11 @@ from Client.Frame import Frame
 from Contract import HistoryCoinContract
 
 
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindow):  # form
     def __init__(self):
         super().__init__(None)
-        self.setMinimumWidth(1100)
-        self.setMinimumHeight(600)
+        self.setMinimumWidth(500)
+        self.setMinimumHeight(500)
         self.setWindowTitle("History Coin Client")
         self.setContentsMargins(0, 0, 0, 0)
         self.resize(1000, 800)
@@ -23,6 +23,7 @@ class MainWindow(QMainWindow):
         self.build_menu()
         self.center()
         self.show()
+        self.frame.add_widget(QPushButton("button"))
         self.HistoryCoinContract = HistoryCoinContract()
 
     def center(self):
