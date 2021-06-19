@@ -16,6 +16,7 @@ contract HistoryCoin {
     event RecordProposalReceived();
     record[] records;
     uint count;
+    string message = "Hello world";
 
     constructor() {}
 
@@ -44,6 +45,14 @@ contract HistoryCoin {
 
     function GetNumberOfRecords() public view returns (uint) {
         return count;
+    }
+
+    function GetMessage() public view returns (string memory) {
+        return message;
+    }
+
+    function SetMessage(string memory newMessage) public {
+        message = newMessage;
     }
 
 //    function IssueTokens() {}

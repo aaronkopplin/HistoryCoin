@@ -2,12 +2,13 @@ import sys
 from PyQt6.QtWidgets import (QWidget,
                              QMainWindow,
                              QPushButton,
-                             QApplication,
+                             QLineEdit,
                              QVBoxLayout,
                              QFrame)
 from PyQt6.QtGui import QFont, QAction, QIcon
 from Client.Frame import Frame
 from Contract import HistoryCoinContract
+from Client.AppContents import AppContents
 
 
 class MainWindow(QMainWindow):  # form
@@ -23,8 +24,9 @@ class MainWindow(QMainWindow):  # form
         self.build_menu()
         self.center()
         self.show()
-        self.frame.add_widget(QPushButton("button"))
-        self.HistoryCoinContract = HistoryCoinContract()
+        self.history_coin_contract = HistoryCoinContract()
+        self.app_contents = AppContents(self.history_coin_contract)
+        self.frame.add_widget(self.app_contents)
 
     def center(self):
         rectangle = self.frameGeometry()
