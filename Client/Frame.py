@@ -38,7 +38,6 @@ class Frame(QFrame):
 
     def add_spacer(self, spacer_direction: SpacerDirection):
         if spacer_direction.value == SpacerDirection.VERTICAL.value:
-            # QSpacerItem()
             self.add_item(QSpacerItem(10, 10, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding))
         else:
-            self.add_item(QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Fixed))
+            self.add_item(QSpacerItem(10, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed))

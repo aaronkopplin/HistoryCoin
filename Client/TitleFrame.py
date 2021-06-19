@@ -15,5 +15,5 @@ class TitleFrame(Frame):
                  layout_direction: LayoutDirection):
         super().__init__(layout_direction)
         self.title = QLabel(title)
-        self.title.setStyleSheet("border: 1px solid black;")
+        self.title.setStyleSheet("border: 1px solid black; background-color: rgb(200, 200, 200)")
         self.add_widget(self.title)
