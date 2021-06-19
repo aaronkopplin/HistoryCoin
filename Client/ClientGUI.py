@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QWidget,
                              QVBoxLayout,
                              QFrame)
 from PyQt6.QtGui import QFont, QAction, QIcon
-from Client.Frame import Frame
+from Client.Frame import Frame, LayoutDirection
 from Contract import HistoryCoinContract
 from Client.AppContents import AppContents
 
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):  # form
         self.center()
         self.show()
         self.history_coin_contract = HistoryCoinContract()
-        self.app_contents = AppContents(self.history_coin_contract)
+        self.app_contents = AppContents(LayoutDirection.VERTICAL, self.history_coin_contract)
         self.frame.add_widget(self.app_contents)
 
     def center(self):
