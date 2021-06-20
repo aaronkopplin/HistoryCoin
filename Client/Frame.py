@@ -1,6 +1,6 @@
 from enum import Enum
 from PyQt6.QtWidgets import (QWidget,
-                             QMainWindow,
+                             QGridLayout,
                              QSpacerItem,
                              QSizePolicy,
                              QVBoxLayout,
@@ -14,24 +14,24 @@ class SpacerDirection(Enum):
 
 
 class LayoutDirection(Enum):
-    VERTICAL = QVBoxLayout()
-    HORIZONTAL = QHBoxLayout()
+    VERTICAL = "VERTICAL"
+    HORIZONTAL = "HORIZONTAL"
+    GRID = "GRID"
 
 
 class Frame(QFrame):
     def __init__(self,
-                 layout=LayoutDirection.VERTICAL):
+                 layout=LayoutDirection):
         super().__init__()
         if layout == LayoutDirection.VERTICAL:
             self.layout = QVBoxLayout()
-        else:
+        elif layout == LayoutDirection.HORIZONTAL:
             self.layout = QHBoxLayout()
+        elif layout == LayoutDirection.GRID:
+            self.layout = QGridLayout()
 
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
-
-    def add_widget(self, widget: QWidget):
-        self.layout.addWidget(widget)
 
     def add_item(self, widget: QSpacerItem):
         self.layout.addItem(widget)

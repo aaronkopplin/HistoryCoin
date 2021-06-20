@@ -7,8 +7,9 @@ from PyQt6.QtWidgets import (QWidget,
                              QFrame)
 from PyQt6.QtGui import QFont, QAction, QIcon
 from Client.Frame import Frame, LayoutDirection
-from Contract import HistoryCoinContract
-from Client.AppContents import AppContents
+from HistoryCoinContract import HistoryCoinContract
+from Client.DetailsFrame import DetailsFrame
+from Client.TransactionsFrame import TransactionsFrame
 
 
 class MainWindow(QMainWindow):  # form
@@ -19,14 +20,19 @@ class MainWindow(QMainWindow):  # form
         self.setWindowTitle("History Coin Client")
         self.setContentsMargins(0, 0, 0, 0)
         self.resize(1000, 800)
-        self.frame = Frame()  # self.frame.setStyleSheet("background-color: rgb(100, 200, 100); ")
+        self.frame = Frame(LayoutDirection.GRID)
         self.setCentralWidget(self.frame)
         self.build_menu()
         self.center()
         self.show()
-        self.history_coin_contract = HistoryCoinContract()
-        self.app_contents = AppContents(LayoutDirection.VERTICAL, self.history_coin_contract)
-        self.frame.add_widget(self.app_contents)
+        self.contract_connection = HistoryCoinContract()
+        self.details_frame = DetailsFrame()
+        self.frame.layout.addWidget(self.details_frame, 1, 0)
+        self.transactions_frame = TransactionsFrame(LayoutDirection.GRID, self.contract_connection, self.details_frame)
+        self.frame.layout.addWidget(self.transactions_frame, 0, 0)
+
+    def notify_details(self, text: str):
+        self.details_frame.log_output(text)
 
     def center(self):
         rectangle = self.frameGeometry()

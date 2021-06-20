@@ -28,15 +28,14 @@ contract HistoryCoin {
         }
     }
 
-    function MakeProposal(string memory text, uint16 lifetimeInBlocks) public payable returns (uint){
+    function MakeProposal(string memory text, uint16 lifetimeInBlocks) public returns (uint){
         if (lifetimeInBlocks > 2407328 ) {
             // roughly one year at 13.1 seconds for block time
             revert("lifetimes greater than one year (2407328 blocks) are not allowed.");
         }
-
-        records.push(record(text, lifetimeInBlocks, block.number, msg.value, count++));
+        records.push(record(text, lifetimeInBlocks, block.number, 0, count++));
         emit RecordProposalReceived();
-        return count;
+        return records[count - 1].id;
     }
 
     function GetRecord(uint id) public view returns (record memory) {

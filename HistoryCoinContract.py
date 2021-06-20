@@ -22,4 +22,6 @@ class HistoryCoinContract:
         tx_hash = self.contract.functions.SetMessage(message).transact()
         tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
-
+    def make_proposal(self, text: str, lifetime_in_blocks: int):
+        tx_hash = self.contract.functions.MakeProposal(text, lifetime_in_blocks).transact()
+        return self.w3.eth.wait_for_transaction_receipt(tx_hash)
