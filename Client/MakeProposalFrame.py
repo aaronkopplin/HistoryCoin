@@ -34,8 +34,9 @@ class MakeProposalFrame(TitleFrame):
         self.layout.addWidget(self.call_function_button)
 
     def call_function(self):
-        output = self.contract_connection.make_proposal(self.param_one.text(), int(self.param_two.text()))
-        self.details_frame.log_output(str(output))
+        if self.param_one.text() != "" and self.param_two.text() != "":
+            output = self.contract_connection.make_proposal(self.param_one.text(), int(self.param_two.text()))
+            self.details_frame.log_output(str(output))
 
 
 
