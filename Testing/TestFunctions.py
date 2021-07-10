@@ -23,6 +23,6 @@ class Test:
                 failures += 1
 
         if failures == 0:
-            print("all tests passed")
+            print("all (" + str(len(tests)) + ") tests passed")
         else:
             print(str(len(tests) - failures) + " passed, " + str(failures) + " failed.")
