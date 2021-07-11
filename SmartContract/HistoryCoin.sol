@@ -147,13 +147,16 @@ contract HistoryCoin {
         totalSupply += amount;
     }
 
-
-    /* function GetRecord(uint id) public view returns (Record storage) {
-        return records[id];
-    } */
+    function GetRecordText(uint id) public view returns (string memory) {
+        return records[id].text;
+    }
 
     function GetNumberOfRecords() public view returns (uint) {
         return numRecords;
+    }
+
+    function GetTotalSupply() public view returns (uint) {
+        return  totalSupply;
     }
 
     function GetMessage() public view returns (string memory) {

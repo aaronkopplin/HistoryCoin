@@ -26,20 +26,32 @@ class HistoryCoinContract:
 
     def set_message(self, message: str):
         tx_hash = self.contract.functions.SetMessage(message).transact()
-        tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
-
-    def make_proposal(self, text: str, lifetime_in_blocks: int):
-        tx_hash = self.contract.functions.MakeProposal(text, lifetime_in_blocks).transact()
-        return self.w3.eth.wait_for_transaction_receipt(tx_hash)
-
-    # def get_totalSupply(self):
-    #     return self.contract.functions
+        self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
     def create_record(self, record_text, lifetime_in_blocks):
-        return self.contract.functions.CreateRecord(record_text, lifetime_in_blocks).transact()
+        tx_hash = self.contract.functions.CreateRecord(record_text, lifetime_in_blocks).transact()
+        self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    def hello_world(self):
-        return "hello world"
+    def get_record_text(self, id: int):
+        return self.contract.functions.GetRecordText(id).call()
 
-    def num_records(self):
+    def get_total_supply(self):
+        return self.contract.functions.GetTotalSupply().call()
+
+    def get_balance_of_sender(self):
+        return self.get_balance_of(self.w3.eth.defaultAccount)
+
+    def get_balance_of(self, address):
+        return self.contract.functions.balanceOf(address).call()
+
+    def request_tokens(self, amount):
+        tx_hash = self.contract.functions.requestTokens(amount).transact()
+        self.w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    def get_num_records(self):
         return self.contract.functions.GetNumberOfRecords().call()
+
+    def transfer(self, to, value: int):
+        tx_hash = self.contract.functions.transfer(to, value).transact()
+        self.w3.eth.wait_for_transaction_receipt(tx_hash)
+
