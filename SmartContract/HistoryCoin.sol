@@ -14,34 +14,43 @@ contract HistoryCoin {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    uint256 constant private MAX_UINT256 = 2**256 - 1;
+    uint256 constant             private MAX_UINT256 = 2**256 - 1;
     mapping (address => uint256) public balances;
     mapping (address => mapping (address => uint256)) public allowed;
-    string public name;  //fancy name: eg Simon Bucks
-    uint8 public decimals;  //How many decimals to show.
-    string public symbol;  //An identifier: eg SBX
-    uint public totalSupply;
+    string                       public name;  //fancy name: eg Simon Bucks
+    uint8                        public decimals;  //How many decimals to show.
+    string                       public symbol;  //An identifier: eg SBX
+    uint                         public totalSupply;
 
-    uint BLOCKS_PER_YEAR = 2407328;
-    uint APY = 5;
-    uint numRecords = 0;
-    mapping(uint => Record) public records;
-    uint private numActiveRecords = 0;
-    uint private numInactiveRecords = 0;
-    string public message = "Hello world";
+    uint                         private BLOCKS_PER_YEAR = 2407328;
+    uint                         public  APY = 5;
+    uint                         public  numRecords = 0;
+    mapping(uint => Record)      public  records;
+    uint                         private numActiveRecords = 0;
+    uint                         private numInactiveRecords = 0;
+    uint                         public  averageTotalVotesPerRecord = 0;
+
+    struct Vote {
+        uint vote_amount;
+        uint security_deposit; // allows anyone to claim the deposit for returning your stake
+    }
 
     struct Record {
         string text;
         uint votingLifetimeInBlocks;
         uint blockProposed;
-        mapping(address => uint) votes;
+        mapping(address => Vote) votes;
         address[] voters;
         uint id;
         bool expired;
+        uint totalVotes;
+        uint interest_rate;
+        address owner;
+        uint security_deposit;
     }
 
     constructor(){
-//        balances[msg.sender] = 100000000;               // Give the creator all initial tokens
+        // balances[msg.sender] = 100000000;               // Give the creator all initial tokens
         totalSupply = 1000000;                        // Update total supply
         name = "History Coin";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
@@ -85,7 +94,7 @@ contract HistoryCoin {
     /* Users can create records, which are publicly available for
        voting. When record voting lifetimes expire, the original stake
        will be returned to the voter, plus interest.  */
-    function CreateRecord(string memory text, uint16 votingLifetimeInBlocks) public {
+    function createRecord(string memory text, uint16 votingLifetimeInBlocks) public payable{
         if (votingLifetimeInBlocks > BLOCKS_PER_YEAR) {
             // roughly one year at 13.1 seconds for block time
             revert("lifetimes greater than one year (2407328 blocks) are not allowed.");
@@ -95,9 +104,11 @@ contract HistoryCoin {
         records[numRecords].votingLifetimeInBlocks = votingLifetimeInBlocks;
         records[numRecords].blockProposed = block.number;
         records[numRecords].voters.push(msg.sender);
-        records[numRecords].votes[msg.sender] = 0;
+        records[numRecords].votes[msg.sender] = Vote(0, 0);
         records[numRecords].id = numRecords;
         records[numRecords].expired = false;
+        records[numRecords].owner = msg.sender;
+        records[numRecords].security_deposit = msg.value;
 
         numRecords++;
         numActiveRecords++;
@@ -106,64 +117,87 @@ contract HistoryCoin {
     /* The act of voting automatically stakes your vote until the end
        of the lifetime of the record. Once the voting period has
        ended, the original stake, plus interest (in HIST) will be
-       returned to the staker  */
-    function Vote(uint id, uint value) external payable {
-        require(records[id].expired);
-        require(balances[msg.sender] >= value);
+       returned to the staker */
+    function vote(uint record_id, uint vote_value, uint security_deposit) external payable {
+        require(!records[record_id].expired);
+        require(balances[msg.sender] >= vote_value);
+        require(msg.value == security_deposit);
 
-        balances[msg.sender] -= value;
-        records[id].votes[msg.sender] += value;
+        balances[msg.sender] -= vote_value;
+        records[record_id].votes[msg.sender].vote_amount += vote_value;
+        records[record_id].votes[msg.sender].security_deposit += security_deposit;
+        records[record_id].totalVotes += vote_value;
+    }
 
-        for (uint i = 0; i < numRecords; i++) {
-            // iterate over all the records that have not expired yet
-            if (records[id].blockProposed + records[id].votingLifetimeInBlocks < block.number && !records[id].expired) {
-                records[i].expired = true;
+    /* a record must expire before its votes can be farmed  */
+    function farmRecord(uint record_id) public {
+        require(!records[record_id].expired);
+        require (records[record_id].blockProposed + records[record_id].votingLifetimeInBlocks < block.number);
 
-                // release the staked funds plus interest
-                Record storage currentRecord = records[i];
-                for (uint j = 0; j < currentRecord.voters.length; j++) {
-                    address voterAddress = currentRecord.voters[j];
-                    returnStake(voterAddress, i);
-                }
-            }
+        records[record_id].expired = true;
+        averageTotalVotesPerRecord = (averageTotalVotesPerRecord + records[record_id].totalVotes) / numRecords;
+        records[record_id].interest_rate = 10; // TODO
+
+        balances[msg.sender] += records[record_id].security_deposit;
+        records[record_id].security_deposit = 0;
+    }
+
+    /* vote farming is the process if returning the vote stake to the original staker. This
+     process costs gas, so it cannot be done randomly. the vote security deposit is an incentive
+     for someone to farm the vote. the security deposit should be higher than the gas cost to farm the
+     vote, or else it will take a long time to return the stake. the higher the security deposit, the greater
+     incentive there is to return the stake, and thus the faster the stake will be returned once the
+     record has expired. */
+    function farmVote(uint record_id, address voter_address) public {
+        require (records[record_id].expired);
+
+        // return the stake to the staker
+        uint interest = records[record_id].interest_rate;
+        issueNewTokens(records[record_id].votes[voter_address].vote_amount + interest, voter_address);
+
+        // pay the security deposit to the vote farmer
+        (bool success, ) = msg.sender.call{value:(records[record_id].votes[voter_address].security_deposit)}("");
+        require(success, "Transfer failed.");
+
+        // clear the balances of the vote
+        records[record_id].votes[voter_address].vote_amount = 0;
+        records[record_id].votes[voter_address].security_deposit = 0;
+    }
+
+    /* function getRecordVoteArray(uint id) public view returns(uint[] memory) {
+        uint length = records[id].voters.length;
+        uint[] memory votes = new uint[](length);
+
+        for(uint i = 0; i < length; i++) {
+            address voter = records[id].voters[i];
+            votes[i] = records[id].votes[voter];
         }
+
+        return votes;
+    } */
+
+    function getRecordVoterArray(uint id) public view returns(address[] memory) {
+        return records[id].voters;
     }
 
-    function returnStake(address voterAddress, uint id) private {
-        // return the stake
-        uint tokens = records[id].votes[voterAddress];
-        balances[voterAddress] += tokens;
-
-        uint interest = tokens * (APY * records[id].votingLifetimeInBlocks.div(BLOCKS_PER_YEAR)).div(100);
-        // issue some interest payment
-        balances[voterAddress] += interest;
-        totalSupply += interest;
-
-        //emit stakeReturned();
-    }
-
-    function requestTokens(uint amount) public {
-        balances[msg.sender] += amount;
+    function issueNewTokens(uint amount, address recipient) private {
+        balances[recipient] += amount;
         totalSupply += amount;
     }
 
-    function GetRecordText(uint id) public view returns (string memory) {
-        return records[id].text;
+    function buyTokens() public payable {
+        require(msg.value >= 0);
+        issueNewTokens(msg.value, msg.sender);
     }
+//
+//    function sellTokens(uint amount) public {
+//        require(amount <= balances[msg.sender]);
+//        balances[msg.sender] -= amount;
+//        // return eth to seller
+//
+//    }
 
-    function GetNumberOfRecords() public view returns (uint) {
-        return numRecords;
-    }
-
-    function GetTotalSupply() public view returns (uint) {
-        return  totalSupply;
-    }
-
-    function GetMessage() public view returns (string memory) {
-        return message;
-    }
-
-    function SetMessage(string memory newMessage) public {
-        message = newMessage;
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
     }
 }

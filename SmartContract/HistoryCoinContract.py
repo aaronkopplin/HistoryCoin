@@ -1,57 +1,76 @@
-import json
-from web3 import Web3
+from SmartContract.BaseHistoryCoinContract import BaseHistoryCoinContract
 
-
-class HistoryCoinContract:
+class HistoryCoinContract(BaseHistoryCoinContract):
     def __init__(self):
-        self.w3 = Web3(Web3.HTTPProvider("HTTP://127.0.0.1:7545"))
-        self.w3.eth.defaultAccount = self.w3.eth.accounts[0]
-        self.connect_to_deployed_contract()
+        super().__init__()
 
-    def connect_to_deployed_contract(self):
-        with open("SmartContract/CompilingAndDeploying/HistoryCoinAbiBin.json") as contract_json:
-            data = json.load(contract_json)
-            abi = data["contracts"]["../HistoryCoin.sol:HistoryCoin"]["abi"]
-            with open("SmartContract/CompilingAndDeploying/HistoryCoinContractAddress", "r") as contract_address_file:
-                address = contract_address_file.readline()
-                self.contract = self.w3.eth.contract(address=address, abi=abi)
+    def APY(self):
+       return self.contract.functions.APY().call()
 
-    def redeploy(self):
-        from SmartContract.CompilingAndDeploying.deploy import deploy
-        deploy()
-        self.connect_to_deployed_contract()
+    def CreateRecord(self, text, votingLifetimeInBlocks):
+       tx_hash = self.contract.functions.CreateRecord(text, votingLifetimeInBlocks).transact()
+       self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    def get_message(self):
-        return self.contract.functions.GetMessage().call()
+    def allowance(self, _owner, _spender):
+       return self.contract.functions.allowance(_owner, _spender).call()
 
-    def set_message(self, message: str):
-        tx_hash = self.contract.functions.SetMessage(message).transact()
-        self.w3.eth.wait_for_transaction_receipt(tx_hash)
+    def allowed(self):
+       return self.contract.functions.allowed().call()
 
-    def create_record(self, record_text, lifetime_in_blocks):
-        tx_hash = self.contract.functions.CreateRecord(record_text, lifetime_in_blocks).transact()
-        self.w3.eth.wait_for_transaction_receipt(tx_hash)
+    def approve(self, _spender, _value):
+       tx_hash = self.contract.functions.approve(_spender, _value).transact()
+       self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    def get_record_text(self, id: int):
-        return self.contract.functions.GetRecordText(id).call()
+    def averageTotalVotesPerRecord(self):
+       return self.contract.functions.averageTotalVotesPerRecord().call()
 
-    def get_total_supply(self):
-        return self.contract.functions.GetTotalSupply().call()
+    def balanceOf(self, _owner):
+       return self.contract.functions.balanceOf(_owner).call()
 
-    def get_balance_of_sender(self):
-        return self.get_balance_of(self.w3.eth.defaultAccount)
+    def balances(self):
+       return self.contract.functions.balances().call()
 
-    def get_balance_of(self, address):
-        return self.contract.functions.balanceOf(address).call()
+    def decimals(self):
+       return self.contract.functions.decimals().call()
 
-    def request_tokens(self, amount):
-        tx_hash = self.contract.functions.requestTokens(amount).transact()
-        self.w3.eth.wait_for_transaction_receipt(tx_hash)
+    def farmVote(self, record_id, voter_address):
+       tx_hash = self.contract.functions.farmVote(record_id, voter_address).transact()
+       self.w3.eth.wait_for_transaction_receipt(tx_hash)
 
-    def get_num_records(self):
-        return self.contract.functions.GetNumberOfRecords().call()
+    def getBalance(self):
+       return self.contract.functions.getBalance().call()
 
-    def transfer(self, to, value: int):
-        tx_hash = self.contract.functions.transfer(to, value).transact()
-        self.w3.eth.wait_for_transaction_receipt(tx_hash)
+    def getRecordVoterArray(self, id):
+       return self.contract.functions.getRecordVoterArray(id).call()
+
+    def mintTokens(self):
+       tx_hash = self.contract.functions.mintTokens().transact()
+       self.w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    def name(self):
+       return self.contract.functions.name().call()
+
+    def numRecords(self):
+       return self.contract.functions.numRecords().call()
+
+    def records(self):
+       return self.contract.functions.records().call()
+
+    def symbol(self):
+       return self.contract.functions.symbol().call()
+
+    def totalSupply(self):
+       return self.contract.functions.totalSupply().call()
+
+    def transfer(self, _to, _value):
+       tx_hash = self.contract.functions.transfer(_to, _value).transact()
+       self.w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    def transferFrom(self, _from, _to, _value):
+       tx_hash = self.contract.functions.transferFrom(_from, _to, _value).transact()
+       self.w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    def vote(self, id, vote_value, security_deposit):
+       tx_hash = self.contract.functions.vote(id, vote_value, security_deposit).transact()
+       self.w3.eth.wait_for_transaction_receipt(tx_hash)
 

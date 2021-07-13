@@ -1,17 +1,12 @@
 import web3.eth
 
 from TestFunctions import Test
-from SmartContract.HistoryCoinContract import HistoryCoinContract
+from SmartContract.BaseHistoryCoinContract import BaseHistoryCoinContract
 from web3 import Web3
 
 
 Test = Test()
-contract = HistoryCoinContract()
-
-
-def test1():
-    contract.set_message("hello test")
-    Test.assert_true(contract.get_message(), "hello test", "set_message")
+contract = BaseHistoryCoinContract()
 
 
 def test2():
@@ -61,12 +56,25 @@ def test6():
     Test.assert_true(new_tot_supply, tot_supply + 100, "get_total_supply")
 
 
+def test7():
+    rec_id = contract.get_num_records()
+    contract.create_record("first record", 100)
+    Test.assert_true(contract.get_record_text(rec_id), "first record", "create_record")
+    contract.request_tokens(100)
+
+    begin_bal = contract.get_balance_of_sender()
+    contract.vote(rec_id, 10)
+    bal_after_vote = contract.get_balance_of_sender()
+    Test.assert_true(begin_bal, bal_after_vote + 10, "vote")
+    Test.assert_true(10, contract.get_record_total_votes(rec_id), "vote")
+
+
 if __name__ == "__main__":
-    # test1()
-    # test2()
-    # test3()
-    # test4()
-    # test5()
+    test2()
+    test3()
+    test4()
+    test5()
     test6()
+    test7()
     Test.print_diagnostics()
 
